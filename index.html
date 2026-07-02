@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Närvaro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f0f4f8; min-height: 100vh; padding: 32px 16px; }
+    #admin-view { max-width: 680px; margin: 0 auto; }
+    .admin-card { background: #fff; border-radius: 16px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); margin-bottom: 32px; }
+    .admin-card h1 { font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
+    .admin-card .sub { color: #718096; font-size: 0.9rem; margin-bottom: 24px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: #4a5568; margin-bottom: 6px; }
+    textarea { width: 100%; height: 160px; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #2d3748; resize: vertical; outline: none; }
+    .field { width: 100%; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #2d3748; outline: none; margin-top: 4px; }
+    .field-group { margin-top: 14px; }
+    .config-box { margin-top: 20px; padding: 16px; background: #f7fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .config-note { font-size: 0.8rem; color: #a0aec0; margin-top: 8px; }
+    .gen-btn { margin-top: 20px; width: 100%; padding: 14px; border: none; border-radius: 10px; background: #667eea; color: #fff; font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .gen-btn:hover { background: #5a67d8; }
+    #qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+    .qr-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .qr-name { font-size: 0.95rem; font-weight: 600; color: #2d3748; text-align: center; }
+    .print-btn-wrap { text-align: center; margin-bottom: 32px; }
+    .print-btn { padding: 12px 32px; border: none; border-radius: 10px; background: #2d3748; color: #fff; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    .settings-btn { display: block; margin: 0 auto 32px; padding: 10px 24px; border: none; border-radius: 10px; background: #edf2f7; color: #4a5568; font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    #settings-panel { display: none; background: #fff; border-radius: 16px; padding: 32px 40px; max-width: 680px; margin: 0 auto 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    #settings-panel h2 { font-size: 1.1rem; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
+    #settings-panel .sub { color: #718096; font-size: 0.85rem; margin-bottom: 20px; }
+    .save-btn { margin-top: 16px; padding: 12px 28px; border: none; border-radius: 10px; background: #38a169; color: #fff; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    .pin-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .pin-box { background: #fff; border-radius: 16px; padding: 36px 32px; text-align: center; width: 300px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+    .pin-box h3 { font-size: 1.1rem; font-weight: 700; color: #1a202c; margin-bottom: 8px; }
+    .pin-box p { font-size: 0.85rem; color: #718096; margin-bottom: 16px; }
+    .pin-input { width: 100%; border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; font-family: 'Inter', sans-serif; font-size: 1.2rem; text-align: center; letter-spacing: 8px; outline: none; margin-bottom: 12px; }
+    .pin-ok { width: 100%; padding: 12px; border: none; border-radius: 10px; background: #667eea; color: #fff; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    .pin-err { color: #e53e3e; font-size: 0.85rem; margin-top: 8px; min-height: 20px; }
+    #attendance-view { display: none; min-height: 100vh; align-items: center; justify-content: center; }
+    .att-card { background: #fff; border-radius: 16px; padding: 48px 40px; max-width: 420px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; }
+    .att-card .greeting { font-size: 0.9rem; color: #718096; margin-bottom: 4px; }
+    .att-card h1 { font-size: 1.7rem; font-weight: 700; color: #1a202c; margin-bottom: 32px; }
+    .choices { display: flex; gap: 16px; margin-bottom: 28px; }
+    .choice-btn { flex: 1; padding: 20px 12px; border-radius: 12px; border: 2px solid #e2e8f0; background: #fff; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; color: #4a5568; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .choice-btn .icon { font-size: 2rem; }
+    .choice-btn.sel-present { border-color: #38a169; background: #f0fff4; color: #276749; }
+    .choice-btn.sel-absent { border-color: #e53e3e; background: #fff5f5; color: #9b2c2c; }
+    .send-btn { width: 100%; padding: 16px; border-radius: 10px; border: none; background: #2d3748; color: #fff; font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .send-btn:disabled { background: #cbd5e0; cursor: not-allowed; }
+    .status { margin-top: 18px; font-size: 0.9rem; font-weight: 600; min-height: 22px; }
+    .status.ok { color: #38a169; }
+    .status.err { color: #e53e3e; }
+    @media print {
+      .admin-card, .print-btn-wrap, .settings-btn, #settings-panel { display: none !important; }
+      body { background: #fff; padding: 0; }
+      #qr-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .qr-card { box-shadow: none; border: 1px solid #e2e8f0; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="admin-view">
+  <div class="admin-card">
+    <h1>🎟 Närvaro – QR-generator</h1>
+    <p class="sub">Kopiera namn och klass från Excel (två kolumner) och klistra in nedan.</p>
+    <label>Namn och klass (klistra in från Excel)</label>
+    <textarea id="name-input" placeholder="Anna Andersson	1A
+Bengt Bengtsson	1B
+Carl Carlsson	2A"></textarea>
+    <div class="field-group">
+      <label>Sidens URL</label>
+      <input id="base-url" class="field" type="text" placeholder="https://din-sida.netlify.app/index.html"/>
+    </div>
+    <div class="config-box">
+      <label>⚙️ Google Sheets-inställningar</label>
+      <input id="gs-url" class="field" style="margin-top:0;" type="text" placeholder="Google Apps Script Webb-URL"/>
+      <p class="config-note">Sparas lokalt i din webbläsare.</p>
+    </div>
+    <button class="gen-btn" onclick="generate()">Generera QR-koder</button>
+  </div>
+
+  <div class="print-btn-wrap" id="print-wrap" style="display:none;">
+    <button class="print-btn" onclick="window.print()">🖨 Skriv ut alla QR-koder</button>
+  </div>
+  <div id="qr-grid"></div>
+
+  <button class="settings-btn" onclick="openSettings()">⚙️ Inställningar</button>
+  <div id="settings-panel">
+    <h2>⚙️ Inställningar</h2>
+    <p class="sub">Uppdatera URL:er här om något ändras.</p>
+    <div class="field-group">
+      <label>Sidens URL (Netlify)</label>
+      <input id="set-base-url" class="field" type="text"/>
+    </div>
+    <div class="field-group" style="margin-top:14px;">
+      <label>Google Apps Script Webb-URL</label>
+      <input id="set-gs-url" class="field" type="text"/>
+    </div>
+    <div class="field-group" style="margin-top:14px;">
+      <label>PIN-kod (för att skydda inställningarna)</label>
+      <input id="set-pin" class="field" type="password" placeholder="Ange ny PIN-kod (4 siffror)"/>
+    </div>
+    <button class="save-btn" onclick="saveSettings()">💾 Spara inställningar</button>
+    <div id="save-status" style="margin-top:10px;font-size:0.85rem;font-weight:600;color:#38a169;"></div>
+  </div>
+</div>
+
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-box">
+    <h3>🔒 Ange PIN-kod</h3>
+    <p>Inställningarna är skyddade.</p>
+    <input class="pin-input" id="pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="••••"/>
+    <button class="pin-ok" onclick="checkPin()">OK</button>
+    <div class="pin-err" id="pin-err"></div>
+  </div>
+</div>
+
+<div id="attendance-view">
+  <div class="att-card">
+    <p class="greeting">Välkommen!</p>
+    <h1 id="person-name">–</h1>
+    <div class="choices">
+      <button class="choice-btn" id="btn-present" onclick="pick('present')">
+        <span class="icon">✅</span>Närvarande
+      </button>
+      <button class="choice-btn" id="btn-absent" onclick="pick('absent')">
+        <span class="icon">❌</span>Frånvarande
+      </button>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-size:0.85rem;font-weight:600;color:#4a5568;margin-bottom:8px;">Din 4-siffriga kod</label>
+      <input id="elev-kod" type="number" maxlength="4" inputmode="numeric"
+        style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:14px;font-family:Inter,sans-serif;font-size:1.5rem;text-align:center;letter-spacing:8px;outline:none;"
+        placeholder="_ _ _ _" oninput="kontrolleraSkicka()"/>
+    </div>
+    <button class="send-btn" id="send-btn" onclick="sendSvar()" disabled>Skicka</button>
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_GS_URL = 'https://script.google.com/macros/s/AKfycbzZ_mKMyLBHlQQSPWPRPC-iyF0A8rkaC24MqfJ74uT7uiRLt_pehoEH3P6Z47LPsgg6/exec';
+const DEFAULT_PIN    = '1234';
+
+// Spara/läsa config
+const FIELDS = ['base-url', 'gs-url'];
+FIELDS.forEach(function(id) {
+  var el = document.getElementById(id);
+  var saved = localStorage.getItem(id);
+  if (saved) el.value = saved;
+  el.addEventListener('input', function() { localStorage.setItem(id, el.value); });
+});
+
+function getGsUrl() {
+  return localStorage.getItem('settings-gs-url') || DEFAULT_GS_URL;
+}
+
+// Avgör vy
+var params = new URLSearchParams(window.location.search);
+var personParam = params.get('person');
+var klassParam  = params.get('klass') || '';
+
+if (personParam) {
+  document.getElementById('admin-view').style.display = 'none';
+  var av = document.getElementById('attendance-view');
+  av.style.display = 'flex';
+  var visningsNamn = klassParam
+    ? 'Elev: ' + decodeURIComponent(personParam) + ' (' + decodeURIComponent(klassParam) + ')'
+    : 'Elev: ' + decodeURIComponent(personParam);
+  document.getElementById('person-name').textContent = visningsNamn;
+}
+
+// QR-generering
+function generate() {
+  var textarea = document.getElementById('name-input').value;
+  var baseUrl  = document.getElementById('base-url').value.trim();
+
+  if (!textarea.trim()) { alert('Ange minst ett namn.'); return; }
+  if (!baseUrl)          { alert('Ange sidens URL.'); return; }
+
+  var rows = textarea.split('\n');
+  var grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+
+  rows.forEach(function(row) {
+    row = row.trim();
+    if (!row) return;
+
+    // Splitta på tab
+    var delar = row.split('\t');
+    var namn  = delar[0].trim();
+    var klass = delar.length > 1 ? delar[1].trim() : '';
+
+    if (!namn) return;
+
+    var url  = baseUrl + '?person=' + encodeURIComponent(namn) + '&klass=' + encodeURIComponent(klass);
+    var card = document.createElement('div');
+    card.className = 'qr-card';
+
+    var qrDiv = document.createElement('div');
+    new QRCode(qrDiv, { text: url, width: 160, height: 160 });
+
+    var label = document.createElement('div');
+    label.className = 'qr-name';
+    label.textContent = klass ? namn + ' (' + klass + ')' : namn;
+
+    card.appendChild(qrDiv);
+    card.appendChild(label);
+    grid.appendChild(card);
+  });
+
+  document.getElementById('print-wrap').style.display = 'block';
+}
+
+// Närvaro
+var valt = null;
+
+function pick(val) {
+  valt = val;
+  document.getElementById('btn-present').className = 'choice-btn' + (val === 'present' ? ' sel-present' : '');
+  document.getElementById('btn-absent').className  = 'choice-btn' + (val === 'absent'  ? ' sel-absent'  : '');
+  kontrolleraSkicka();
+  document.getElementById('status').textContent = '';
+}
+
+function kontrolleraSkicka() {
+  var kod = document.getElementById('elev-kod');
+  if (!kod) return;
+  var kodVal = kod.value.replace(/\D/g, '');
+  document.getElementById('send-btn').disabled = !(valt && kodVal.length === 4);
+}
+
+function sendSvar() {
+  if (!valt) return;
+  var gsUrl = getGsUrl();
+  var btn    = document.getElementById('send-btn');
+  var status = document.getElementById('status');
+  btn.disabled = true;
+  btn.textContent = 'Skickar…';
+
+  var p2 = new URLSearchParams(window.location.search);
+  var kod      = document.getElementById('elev-kod') ? document.getElementById('elev-kod').value.substring(0,4) : '';
+  var person   = decodeURIComponent(p2.get('person') || personParam);
+  var klass    = decodeURIComponent(p2.get('klass') || klassParam || '');
+  var svar     = valt === 'present' ? 'Närvarande' : 'Frånvarande';
+  var tidpunkt = new Date().toLocaleString('sv-SE');
+
+  var url = gsUrl
+    + '?person=' + encodeURIComponent(person)
+    + '&klass='  + encodeURIComponent(klass)
+    + '&kod='    + encodeURIComponent(kod)
+    + '&svar='   + encodeURIComponent(svar)
+    + '&tid='    + encodeURIComponent(tidpunkt);
+
+  fetch(url, { method: 'GET', mode: 'no-cors' })
+    .then(function() {
+      status.textContent = '✓ Skickat!';
+      status.className = 'status ok';
+      btn.textContent = 'Skickat';
+    })
+    .catch(function() {
+      status.textContent = '✗ Något gick fel. Försök igen.';
+      status.className = 'status err';
+      btn.disabled = false;
+      btn.textContent = 'Skicka';
+    });
+}
+
+// Inställningar
+function openSettings() {
+  document.getElementById('pin-overlay').style.display = 'flex';
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-err').textContent = '';
+  document.getElementById('pin-input').focus();
+}
+
+function checkPin() {
+  var pin     = localStorage.getItem('settings-pin') || DEFAULT_PIN;
+  var entered = document.getElementById('pin-input').value;
+  if (entered === pin) {
+    document.getElementById('pin-overlay').style.display = 'none';
+    document.getElementById('set-base-url').value = localStorage.getItem('base-url') || '';
+    document.getElementById('set-gs-url').value   = getGsUrl();
+    document.getElementById('set-pin').value       = '';
+    document.getElementById('settings-panel').style.display = 'block';
+    document.getElementById('settings-panel').scrollIntoView({ behavior: 'smooth' });
+  } else {
+    document.getElementById('pin-err').textContent = 'Fel PIN-kod, försök igen.';
+  }
+}
+
+document.getElementById('pin-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') checkPin();
+});
+
+function saveSettings() {
+  var baseUrl = document.getElementById('set-base-url').value.trim();
+  var gsUrl   = document.getElementById('set-gs-url').value.trim();
+  var newPin  = document.getElementById('set-pin').value.trim();
+  if (baseUrl) { localStorage.setItem('base-url', baseUrl); document.getElementById('base-url').value = baseUrl; }
+  if (gsUrl)   localStorage.setItem('settings-gs-url', gsUrl);
+  if (newPin)  localStorage.setItem('settings-pin', newPin);
+  document.getElementById('save-status').textContent = '✓ Inställningar sparade!';
+  setTimeout(function() {
+    document.getElementById('save-status').textContent = '';
+    document.getElementById('settings-panel').style.display = 'none';
+  }, 2000);
+}
+</script>
+</body>
+</html>

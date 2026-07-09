@@ -132,9 +132,13 @@ Carl Carlsson	2A"></textarea>
     </div>
     <div style="margin-bottom:20px;">
       <label style="display:block;font-size:0.85rem;font-weight:600;color:#4a5568;margin-bottom:8px;">Din 4-siffriga kod</label>
-      <input id="elev-kod" type="number" maxlength="4" inputmode="numeric"
-        style="width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:14px;font-family:Inter,sans-serif;font-size:1.5rem;text-align:center;letter-spacing:8px;outline:none;"
-        placeholder="_ _ _ _" oninput="kontrolleraSkicka()"/>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <input class="kod-ruta" id="kod-1" type="tel" maxlength="1" inputmode="numeric" style="width:60px;height:60px;border:2px solid #e2e8f0;border-radius:10px;font-family:Inter,sans-serif;font-size:1.5rem;text-align:center;outline:none;" oninput="kodInput(this,1)" onkeydown="kodBackspace(event,1)"/>
+        <input class="kod-ruta" id="kod-2" type="tel" maxlength="1" inputmode="numeric" style="width:60px;height:60px;border:2px solid #e2e8f0;border-radius:10px;font-family:Inter,sans-serif;font-size:1.5rem;text-align:center;outline:none;" oninput="kodInput(this,2)" onkeydown="kodBackspace(event,2)"/>
+        <input class="kod-ruta" id="kod-3" type="tel" maxlength="1" inputmode="numeric" style="width:60px;height:60px;border:2px solid #e2e8f0;border-radius:10px;font-family:Inter,sans-serif;font-size:1.5rem;text-align:center;outline:none;" oninput="kodInput(this,3)" onkeydown="kodBackspace(event,3)"/>
+        <input class="kod-ruta" id="kod-4" type="tel" maxlength="1" inputmode="numeric" style="width:60px;height:60px;border:2px solid #e2e8f0;border-radius:10px;font-family:Inter,sans-serif;font-size:1.5rem;text-align:center;outline:none;" oninput="kodInput(this,4)" onkeydown="kodBackspace(event,4)"/>
+      </div>
+      <input type="hidden" id="elev-kod"/>
     </div>
     <button class="send-btn" id="send-btn" onclick="sendSvar()" disabled>Skicka</button>
     <div class="status" id="status"></div>
@@ -224,6 +228,57 @@ function pick(val) {
   document.getElementById('btn-absent').className  = 'choice-btn' + (val === 'absent'  ? ' sel-absent'  : '');
   kontrolleraSkicka();
   document.getElementById('status').textContent = '';
+}
+
+var kodVarden = ['', '', '', ''];
+var kodTimers = [null, null, null, null];
+
+function kodInput(el, nr) {
+  var val = el.value.replace(/[^0-9]/g, '');
+  el.value = val ? val[val.length-1] : '';
+  var i = nr - 1;
+
+  if (el.value) {
+    kodVarden[i] = el.value;
+
+    // Visa siffran i 2 sekunder, sedan asterisk
+    if (kodTimers[i]) clearTimeout(kodTimers[i]);
+    kodTimers[i] = setTimeout(function() {
+      el.value = '*';
+    }, 2000);
+
+    // Flytta till nasta ruta
+    if (nr < 4) {
+      document.getElementById('kod-' + (nr + 1)).focus();
+    }
+  } else {
+    kodVarden[i] = '';
+  }
+
+  uppdateraElevKod();
+  kontrolleraSkicka();
+}
+
+function kodBackspace(event, nr) {
+  if (event.key === 'Backspace') {
+    var i = nr - 1;
+    var el = document.getElementById('kod-' + nr);
+    if (!el.value && nr > 1) {
+      kodVarden[i-1] = '';
+      var prev = document.getElementById('kod-' + (nr - 1));
+      prev.value = '';
+      prev.focus();
+    } else {
+      kodVarden[i] = '';
+      el.value = '';
+    }
+    uppdateraElevKod();
+    kontrolleraSkicka();
+  }
+}
+
+function uppdateraElevKod() {
+  document.getElementById('elev-kod').value = kodVarden.join('');
 }
 
 function kontrolleraSkicka() {

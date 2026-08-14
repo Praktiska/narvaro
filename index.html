@@ -285,8 +285,7 @@ function generaBrev() {
   if (!textarea.trim()) { alert('Ange minst ett namn.'); return; }
   if (!baseUrl)          { alert('Ange sidens URL.'); return; }
 
-  var rows = textarea.split('
-');
+  var rows = textarea.split('\n');
   var brevDiv = document.getElementById('brev-container');
   brevDiv.innerHTML = '';
   var harElever = false;

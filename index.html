@@ -52,6 +52,30 @@
     .status { margin-top: 18px; font-size: 0.9rem; font-weight: 600; min-height: 22px; }
     .status.ok { color: #38a169; }
     .status.err { color: #e53e3e; }
+    /* ── BREV ── */
+    .brev-sida {
+      background: #fff;
+      padding: 20mm;
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .brev-rubrik { font-size: 1.2rem; font-weight: 700; color: #1a202c; margin-bottom: 16px; }
+    .brev-elev { font-size: 1rem; font-weight: 600; color: #2b6cb0; margin-bottom: 16px; }
+    .brev-text { font-size: 0.9rem; line-height: 1.7; color: #2d3748; margin-bottom: 20px; }
+    .brev-qr { text-align: center; margin: 20px 0; }
+    .brev-mentor { font-size: 0.9rem; line-height: 1.6; margin-top: 16px; color: #2d3748; }
+    .brev-skola { font-size: 0.8rem; color: #718096; margin-top: 20px; }
+
+    @media print {
+      #admin-view .admin-card, #admin-view .gen-btn,
+      #qr-grid, #print-wrap, .settings-btn, #settings-panel,
+      .pin-overlay, #brev-wrap > div:first-child { display: none !important; }
+      body { background: #fff; }
+      .brev-sida { border: none; box-shadow: none; padding: 15mm; margin: 0; page-break-after: always; }
+    }
+
     @media print {
       .admin-card, .print-btn-wrap, .settings-btn, #settings-panel { display: none !important; }
       body { background: #fff; padding: 0; }
@@ -80,12 +104,22 @@ Carl Carlsson	2A"></textarea>
       <p class="config-note">Sparas lokalt i din webbläsare.</p>
     </div>
     <button class="gen-btn" onclick="generate()">Generera QR-koder</button>
+    <button class="gen-btn" style="margin-top:10px;background:#38a169;" onclick="generaBrev()">📄 Generera brev med QR-koder</button>
+    <button class="gen-btn" style="margin-top:10px;background:#38a169;" onclick="generaBrev()">📄 Generera brev med QR-koder</button>
   </div>
 
   <div class="print-btn-wrap" id="print-wrap" style="display:none;">
     <button class="print-btn" onclick="window.print()">🖨 Skriv ut alla QR-koder</button>
   </div>
   <div id="qr-grid"></div>
+
+  <div id="brev-wrap" style="display:none;max-width:680px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <button class="print-btn" onclick="window.print()">🖨 Skriv ut brev</button>
+      <button class="settings-btn" style="display:inline-block;margin-left:12px;" onclick="document.getElementById('brev-wrap').style.display='none'">✕ Stäng</button>
+    </div>
+    <div id="brev-container"></div>
+  </div>
 
   <button class="settings-btn" onclick="openSettings()">⚙️ Inställningar</button>
   <div id="settings-panel">
@@ -228,6 +262,79 @@ function pick(val) {
   document.getElementById('btn-absent').className  = 'choice-btn' + (val === 'absent'  ? ' sel-absent'  : '');
   kontrolleraSkicka();
   document.getElementById('status').textContent = '';
+}
+
+// ── Mentorer per klass ───────────────────────────────────────────────
+var mentorer = {
+  'BF24':  { namn: 'Erica Erlandsson', tel: '0725-20 96 89', mail: 'erica.erlandsson@praktiska.se' },
+  'VF24':  { namn: 'Erica Erlandsson', tel: '0725-20 96 89', mail: 'erica.erlandsson@praktiska.se' },
+  'VF24A': { namn: 'Erica Erlandsson', tel: '0725-20 96 89', mail: 'erica.erlandsson@praktiska.se' },
+  'VF24B': { namn: 'Erica Erlandsson', tel: '0725-20 96 89', mail: 'erica.erlandsson@praktiska.se' },
+  'IN24':  { namn: 'Harry Sjostrand',  tel: '0767-60 21 35', mail: 'harry.sjostrand@praktiska.se' },
+  'FS24':  { namn: 'Nancy Shahin',     tel: '0725-545643',   mail: 'nancy.shahin@praktiska.se' }
+};
+
+function hamtaMentor(klass) {
+  var k = klass.trim().toUpperCase().replace(/ /g, '');
+  return mentorer[k] || null;
+}
+
+function generaBrev() {
+  var textarea = document.getElementById('name-input').value;
+  var baseUrl  = document.getElementById('base-url').value.trim();
+
+  if (!textarea.trim()) { alert('Ange minst ett namn.'); return; }
+  if (!baseUrl)          { alert('Ange sidens URL.'); return; }
+
+  var rows = textarea.split('
+');
+  var brevDiv = document.getElementById('brev-container');
+  brevDiv.innerHTML = '';
+  var harElever = false;
+
+  rows.forEach(function(row) {
+    row = row.trim();
+    if (!row) return;
+    var delar = row.split('	');
+    var namn  = delar[0].trim();
+    var klass = delar.length > 1 ? delar[1].trim() : '';
+    if (!namn) return;
+
+    harElever = true;
+    var mentor = hamtaMentor(klass);
+    var url = baseUrl + '?person=' + encodeURIComponent(namn) + '&klass=' + encodeURIComponent(klass);
+    var qrId = 'qrb' + Math.random().toString(36).substr(2,9);
+
+    var mentorHtml = '';
+    if (mentor) {
+      mentorHtml = '<div class="brev-mentor"><strong>Elevens mentor:</strong><br>' +
+        mentor.namn + '<br>Tel: ' + mentor.tel + '<br>Mail: ' + mentor.mail + '</div>';
+    }
+
+    var sida = document.createElement('div');
+    sida.className = 'brev-sida';
+    sida.innerHTML =
+      '<div class="brev-rubrik">Narvarorapportering for APL-elev</div>' +
+      '<div class="brev-elev">Elev: ' + namn + ' (' + klass + ')</div>' +
+      '<div class="brev-text">Hej,<br><br>' +
+      'Du som handledare for en elev pa Praktiska Gymnasiet Malmo City behover meddela skolan varje dag om eleven ar pa plats eller inte pa sin APL-plats.<br><br>' +
+      'For att gora det sa enkelt som mojligt sa far du som handledare har en unik QR-kod for den eleven du ar handledare for.<br><br>' +
+      'Du scannar enbart koden med din mobiltelefon och klickar i om eleven ar pa plats eller ej. Skriv darefter i en <strong>egen pahittad</strong> 4-siffrig kod och klicka pa skicka. Det ar allt du behover gora. Det enda du behover komma ihag ar din 4-siffriga kod som du ska anvanda varje dag.<br><br>' +
+      'Om du har fragor om detta sa meddela elevens mentor. Du har telefonnummer och mailadress nedan.</div>' +
+      '<div class="brev-qr" id="' + qrId + '"></div>' +
+      mentorHtml +
+      '<div class="brev-skola">Praktiska Gymnasiet Malmo City<br>Industrigatan 15<br>212 14 Malmo</div>';
+
+    brevDiv.appendChild(sida);
+    (function(id, u) {
+      setTimeout(function() { new QRCode(document.getElementById(id), { text: u, width: 180, height: 180 }); }, 200);
+    })(qrId, url);
+  });
+
+  if (harElever) {
+    document.getElementById('brev-wrap').style.display = 'block';
+    document.getElementById('brev-wrap').scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 var kodVarden = ['', '', '', ''];

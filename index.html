@@ -183,7 +183,7 @@ const DEFAULT_GS_URL = 'https://script.google.com/macros/s/AKfycbzZ_mKMyLBHlQQSP
 const DEFAULT_PIN    = '1234';
 
 // Spara/läsa config
-const FIELDS = ['base-url', 'gs-url'];
+const FIELDS = ['base-url', 'gs-url', 'name-input'];
 FIELDS.forEach(function(id) {
   var el = document.getElementById(id);
   var saved = localStorage.getItem(id);

@@ -302,6 +302,7 @@ function generaBrev() {
     var mentor = hamtaMentor(klass);
     var url = baseUrl + '?person=' + encodeURIComponent(namn) + '&klass=' + encodeURIComponent(klass);
     var qrId = 'qrb' + Math.random().toString(36).substr(2,9);
+    var exempelKod = Math.floor(1000 + Math.random() * 9000);
 
     var mentorHtml = '';
     if (mentor) {
@@ -315,10 +316,10 @@ function generaBrev() {
       '<div class="brev-rubrik">Närvarorapportering för APL-elev</div>' +
       '<div class="brev-elev">Elev: ' + namn + ' (' + klass + ')</div>' +
       '<div class="brev-text">Hej,<br><br>' +
-      'Du som handledare för en elev på Praktiska Gymnasiet Malmö City behöver meddela skolan varje dag om eleven är på plats eller inte på sin APL-plats.<br><br>' +
-      'För att göra det så enkelt som möjligt så får du som handledare här en unik QR-kod för den eleven du är handledare för.<br><br>' +
-      'Du scannar enbart koden med din mobiltelefon och klickar i om eleven är på plats eller ej. Skriv därefter i en <strong>egen påhittad</strong> 4-siffrig kod och klicka på skicka. Det är allt du behöver göra. Det enda du behöver komma ihåg är din 4-siffriga kod som du ska använda varje dag.<br><br>' +
-      'Om du har frågor om detta så meddela elevens mentor. Du har telefonnummer och mailadress nedan.</div>' +
+      'Som handledare för en APL-elev på Praktiska Gymnasiet Malmö City behöver du varje dag meddela om eleven är på plats eller inte.<br><br>' +
+      'Nedan finns en unik QR-kod för din elev. Scanna den med mobilen och ange om eleven är på plats eller ej.<br><br>' +
+      'Första gången väljer du fritt en 4-siffrig kod (valfria siffror, t.ex. ' + exempelKod + ') som du sedan använder varje dag för att bekräfta rapporteringen.<br><br>' +
+      'Har du frågor kan du kontakta elevens mentor nedan.</div>' +
       '<div class="brev-qr" id="' + qrId + '"></div>' +
       mentorHtml +
       '<div class="brev-skola">Praktiska Gymnasiet Malmö City<br>Industrigatan 15<br>212 14 Malmö</div>';
